@@ -298,37 +298,62 @@ input:focus, textarea:focus { border-color: var(--accent); }
 }
 
 /* ── Lo-fi ────────────────────────────────────────────────────────────────── */
-.lofi-wrap {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%; /* 16:9 */
-  border-radius: 8px;
-  overflow: hidden;
+.lofi-status {
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
-.lofi-frame {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-}
-.lofi-footer {
+.lofi-status.live   { color: var(--green); }
+.lofi-status.live::before   { content: '●'; font-size: 0.6rem; }
+.lofi-status.offline { color: var(--text-muted); }
+.lofi-status.checking { color: var(--text-muted); }
+
+.lofi-list {
+  list-style: none;
   display: flex;
   flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+}
+.lofi-item { border-radius: 8px; overflow: hidden; }
+.lofi-link {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-}
-.lofi-hint {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-.lofi-stream-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
-.lofi-stream-btn.active {
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 0.875rem;
   background: var(--surface2);
-  color: var(--accent);
-  border-color: var(--accent);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, background 0.15s;
 }
+.lofi-link:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
+}
+.lofi-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  box-shadow: 0 0 6px var(--green);
+}
+.lofi-emoji { font-size: 1rem; flex-shrink: 0; }
+.lofi-label { flex: 1; }
+.lofi-arrow { font-size: 0.8rem; color: var(--text-muted); }
+
+.lofi-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+.lofi-updated { font-size: 0.75rem; color: var(--text-muted); }
 
 /* ── Auth Modal ───────────────────────────────────────────────────────────── */
 .modal-overlay {
