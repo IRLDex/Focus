@@ -4,10 +4,12 @@ export default {
   size: 'small',
 
   _streams: [
-    { id: 'EWrX250Zhko', label: 'beats to relax/study to',  emoji: '📚' },
-    { id: '28KRPhVzCus', label: 'beats to sleep/chill to',  emoji: '💤' },
-    { id: 'HuFYqnbVbzY', label: 'synthwave radio',           emoji: '🌌' },
-    { id: '1oDrJba2PSs', label: 'jazz lofi radio',           emoji: '🎷' },
+    { id: 'X4VbdwhkE10', label: 'beats to relax/study to',       emoji: '📚' },
+    { id: '4xDzrJKXOOY', label: 'synthwave radio',                emoji: '🌌' },
+    { id: 'JD-kMIpDfnY', label: 'beats to sleep/chill to',       emoji: '💤' },
+    { id: 'GSfT7H87zq4', label: 'synth ambient · deep space',     emoji: '🪐' },
+    { id: 'xORCbIptqcc', label: 'sleep ambient · fall asleep to', emoji: '😴' },
+    { id: 'E2vONfzoyRI', label: 'jazz lofi radio',                emoji: '🎷' },
   ],
   _live: [],
   _checkInterval: null,
