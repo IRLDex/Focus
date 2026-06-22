@@ -18,6 +18,7 @@ export default {
       <div class="water-glasses">
         <span class="water-count">0</span>
         <span class="water-goal">/ 8 glasses</span>
+        <button class="btn btn-ghost water-reset" title="Reset count">↺</button>
       </div>
       <div class="water-drops" aria-hidden="true"></div>
       <button class="btn water-drink">I drank! 💧</button>
@@ -34,6 +35,7 @@ export default {
       goal: container.querySelector('.water-goal'),
       drops: container.querySelector('.water-drops'),
       drink: container.querySelector('.water-drink'),
+      reset: container.querySelector('.water-reset'),
       nextTime: container.querySelector('.water-next-time'),
       streak: container.querySelector('.water-streak-val'),
       interval: container.querySelector('.water-interval'),
@@ -41,6 +43,11 @@ export default {
     };
 
     this._el.drink.addEventListener('click', () => this._drink());
+    this._el.reset.addEventListener('click', () => {
+      this._state.glasses = 0;
+      this._render();
+      window.dispatchEvent(new CustomEvent('widget:save', { detail: { id: 'water' } }));
+    });
     this._el.interval.addEventListener('change', () => {
       this._state.intervalMins = parseInt(this._el.interval.value) || 30;
       this._scheduleNext();
