@@ -294,12 +294,91 @@ input:focus, textarea:focus { border-color: var(--accent); }
 }
 
 /* ── Notes ────────────────────────────────────────────────────────────────── */
+.notes-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+  min-width: 0;
+}
+
+.notes-tabs-list {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  padding-bottom: 3px;
+  min-width: 0;
+}
+.notes-tabs-list::-webkit-scrollbar { height: 3px; }
+.notes-tabs-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.notes-tabs-list::-webkit-scrollbar-track { background: transparent; }
+
+.notes-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+.notes-tab:hover { background: var(--surface2); color: var(--text); }
+.notes-tab.active {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: var(--border);
+  border-bottom-color: var(--surface2);
+}
+.notes-tab-del {
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.1s;
+  cursor: pointer;
+  padding: 0 0.1rem;
+}
+.notes-tab:hover .notes-tab-del { opacity: 1; }
+.notes-tab-del:hover { color: var(--red); }
+
+.notes-tab-input {
+  width: 80px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent);
+  border-radius: 0;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: var(--font);
+  outline: none;
+}
+
+.notes-add-tab {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .notes-area {
   flex: 1;
   resize: none;
-  min-height: 220px;
+  min-height: 200px;
   line-height: 1.6;
-  border-radius: 8px;
+  border-radius: 0 8px 8px 8px;
 }
 .notes-footer {
   display: flex;
