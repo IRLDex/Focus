@@ -1,0 +1,11 @@
+# Supabase credentials — copy supabase.example.js → supabase.js and fill in your values
+supabase.js
+
+# Claude Code internal config
+.claude/
+
+# OS / editor clutter
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/

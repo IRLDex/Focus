@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Config banner (hidden once Supabase is configured) -->
+  <div class="config-banner" id="config-banner">
+    ⚠️ Configure Supabase in <code>supabase.js</code> to enable accounts &amp; sync. Running in guest (local) mode.
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo">✦ Focus</div>
+    <div class="header-right">
+      <div id="auth-area"></div>
+      <button class="btn btn-ghost btn-sm" id="theme-toggle" title="Toggle theme">☀️</button>
+    </div>
+  </header>
+
+  <!-- Dashboard grid — widgets are injected here by app.js -->
+  <main class="dashboard" id="dashboard"></main>
+
+  <!-- Auth modal -->
+  <div class="modal-overlay" id="auth-modal" role="dialog" aria-modal="true">
+    <div class="modal">
+      <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+      <h2>Welcome back</h2>
+      <form id="auth-form" novalidate>
+        <input id="auth-email" type="email" placeholder="Email" autocomplete="email" required>
+        <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" required>
+        <div id="auth-error"></div>
+        <button class="btn" id="auth-submit" type="submit">Sign in</button>
+      </form>
+      <button id="auth-toggle">Don't have an account? Register</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    // Hide config banner once real Supabase values are set
+    import { SUPABASE_URL } from './supabase.js';
+    if (SUPABASE_URL && !SUPABASE_URL.startsWith('YOUR_')) {
+      document.getElementById('config-banner').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
