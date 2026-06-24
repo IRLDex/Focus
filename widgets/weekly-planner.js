@@ -2,21 +2,33 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function getWeekKey() {
   const d = new Date();
-  const day = d.getDay() || 7; // Mon=1 … Sun=7
+  const day = d.getDay() || 7;
   const mon = new Date(d);
   mon.setDate(d.getDate() - day + 1);
-  return mon.toISOString().slice(0, 10); // YYYY-MM-DD of Monday
+  return mon.toISOString().slice(0, 10);
 }
 
 function getTodayLabel() {
-  const idx = (new Date().getDay() || 7) - 1; // 0=Mon … 6=Sun
+  const idx = (new Date().getDay() || 7) - 1;
   return DAYS[idx];
+}
+
+function getWeekDates() {
+  const d = new Date();
+  const day = d.getDay() || 7;
+  const mon = new Date(d);
+  mon.setDate(d.getDate() - day + 1);
+  return DAYS.map((_, i) => {
+    const date = new Date(mon);
+    date.setDate(mon.getDate() + i);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  });
 }
 
 export default {
   id: 'weekly-planner',
   title: 'Weekly Planner',
-  size: 'large',
+  size: 'full',
 
   _weeks: {},
   _saveTimer: null,
@@ -45,14 +57,15 @@ export default {
   _buildUI() {
     const weekKey = getWeekKey();
     const today = getTodayLabel();
+    const dates = getWeekDates();
     if (!this._weeks[weekKey]) this._weeks[weekKey] = {};
     const week = this._weeks[weekKey];
 
     this._container.innerHTML = `
       <div class="wp-grid">
-        ${DAYS.map(day => `
+        ${DAYS.map((day, i) => `
           <div class="wp-col ${day === today ? 'wp-today' : ''}">
-            <div class="wp-day-label">${day}${day === today ? ' ·today' : ''}</div>
+            <div class="wp-day-label">${day} <span class="wp-date">${dates[i]}</span></div>
             <textarea class="wp-area" data-day="${day}" placeholder="…">${this._escape(week[day] || '')}</textarea>
           </div>
         `).join('')}

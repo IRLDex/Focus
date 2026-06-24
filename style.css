@@ -81,6 +81,7 @@ body {
 .card:hover { box-shadow: 0 6px 32px rgba(124,106,247,0.12); }
 .card-medium { grid-column: span 1; }
 .card-large { grid-column: span 2; }
+.card-full { grid-column: 1 / -1; }
 
 .card-header {
   padding: 0.9rem 1.1rem 0.5rem;
@@ -797,6 +798,7 @@ emoji-picker {
   text-align: center;
 }
 .wp-today .wp-day-label { color: var(--accent); }
+.wp-date { font-weight: 400; color: var(--text-muted); }
 .wp-area {
   flex: 1;
   resize: none;
