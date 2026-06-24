@@ -4,6 +4,13 @@ import waterWidget from './widgets/water.js';
 import checklistWidget from './widgets/checklist.js';
 import notesWidget from './widgets/notes.js';
 import lofiWidget from './widgets/lofi.js';
+import breakReminderWidget from './widgets/break-reminder.js';
+import sessionTimerWidget from './widgets/session-timer.js';
+import habitTrackerWidget from './widgets/habit-tracker.js';
+import quickLinksWidget from './widgets/quick-links.js';
+import ambientSoundsWidget from './widgets/ambient-sounds.js';
+import dailyQuoteWidget from './widgets/daily-quote.js';
+import weeklyPlannerWidget from './widgets/weekly-planner.js';
 
 // ── Widget registry ──────────────────────────────────────────────────────────
 // To add a new widget: import it above and add it to this array.
@@ -13,6 +20,13 @@ const WIDGETS = [
   lofiWidget,
   checklistWidget,
   notesWidget,
+  breakReminderWidget,
+  sessionTimerWidget,
+  habitTrackerWidget,
+  quickLinksWidget,
+  ambientSoundsWidget,
+  dailyQuoteWidget,
+  weeklyPlannerWidget,
 ];
 
 // ── Layout state ──────────────────────────────────────────────────────────────
