@@ -35,11 +35,24 @@
       <div class="header-logo">✦ Focus</div>
       <div class="header-right">
         <div id="auth-area"></div>
+        <button class="btn btn-ghost btn-sm" id="customize-btn" title="Customize widgets">⊞ Customize</button>
         <button class="btn btn-ghost btn-sm theme-toggle" title="Toggle theme">☀️</button>
       </div>
     </header>
 
     <main class="dashboard" id="dashboard"></main>
+
+    <!-- Customize panel -->
+    <div class="customize-overlay" id="customize-panel">
+      <div class="customize-drawer">
+        <div class="customize-header">
+          <h3>Customize widgets</h3>
+          <button class="btn btn-ghost btn-sm" id="customize-close">✕</button>
+        </div>
+        <p class="customize-hint">Drag cards on the dashboard to reorder. Toggle visibility here.</p>
+        <div id="customize-list"></div>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="app.js"></script>

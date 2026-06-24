@@ -15,6 +15,24 @@ const WIDGETS = [
   notesWidget,
 ];
 
+// ── Layout state ──────────────────────────────────────────────────────────────
+// order: array of widget ids in display order
+// hidden: set of widget ids that are hidden
+let layout = {
+  order: WIDGETS.map(w => w.id),
+  hidden: [],
+};
+
+function saveLayout() {
+  sb.saveWidgetData(session, '__layout__', layout).catch(() => {});
+}
+
+function orderedWidgets() {
+  return layout.order
+    .map(id => WIDGETS.find(w => w.id === id))
+    .filter(w => w && !layout.hidden.includes(w.id));
+}
+
 // ── Supabase client (minimal, no SDK required) ───────────────────────────────
 const sb = {
   headers: {
@@ -104,26 +122,148 @@ function showApp() {
 }
 
 // ── Mount widgets ─────────────────────────────────────────────────────────────
+const _mountedWidgets = new Set();
+
 function mountWidgets() {
   const grid = document.getElementById('dashboard');
-  if (grid.children.length) return; // already mounted
-  WIDGETS.forEach(widget => {
-    const card = document.createElement('div');
-    card.className = `card card-${widget.size || 'small'}`;
-    const header = document.createElement('div');
-    header.className = 'card-header';
-    header.innerHTML = `<h2 class="card-title">${widget.title}</h2>`;
-    const body = document.createElement('div');
-    body.className = 'card-body';
-    card.appendChild(header);
-    card.appendChild(body);
+  grid.innerHTML = '';
+  _mountedWidgets.clear();
+
+  orderedWidgets().forEach(widget => {
+    const card = createCard(widget);
     grid.appendChild(card);
-    widget.render(body);
+    if (!_mountedWidgets.has(widget.id)) {
+      widget.render(card.querySelector('.card-body'));
+      _mountedWidgets.add(widget.id);
+    }
+  });
+
+  setupDragAndDrop();
+}
+
+function createCard(widget) {
+  const card = document.createElement('div');
+  card.className = `card card-${widget.size || 'small'}`;
+  card.dataset.widgetId = widget.id;
+  card.draggable = true;
+
+  card.innerHTML = `
+    <div class="card-header">
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <h2 class="card-title">${widget.title}</h2>
+    </div>
+    <div class="card-body"></div>
+  `;
+  return card;
+}
+
+// ── Drag and drop ─────────────────────────────────────────────────────────────
+let dragSrcId = null;
+
+function setupDragAndDrop() {
+  const grid = document.getElementById('dashboard');
+
+  grid.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      dragSrcId = card.dataset.widgetId;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      grid.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+      dragSrcId = null;
+    });
+
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (card.dataset.widgetId !== dragSrcId) {
+        grid.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+        card.classList.add('drag-over');
+      }
+    });
+
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('drag-over');
+    });
+
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const targetId = card.dataset.widgetId;
+      if (!dragSrcId || dragSrcId === targetId) return;
+
+      // Reorder layout
+      const from = layout.order.indexOf(dragSrcId);
+      const to   = layout.order.indexOf(targetId);
+      layout.order.splice(from, 1);
+      layout.order.splice(to, 0, dragSrcId);
+
+      mountWidgets();
+      saveLayout();
+    });
+  });
+}
+
+// ── Customize panel ───────────────────────────────────────────────────────────
+function setupCustomizePanel() {
+  const btn   = document.getElementById('customize-btn');
+  const panel = document.getElementById('customize-panel');
+  const close = document.getElementById('customize-close');
+
+  btn.addEventListener('click', () => {
+    renderCustomizePanel();
+    panel.classList.add('open');
+  });
+  close.addEventListener('click', () => panel.classList.remove('open'));
+  panel.addEventListener('click', e => { if (e.target === panel) panel.classList.remove('open'); });
+}
+
+function renderCustomizePanel() {
+  const list = document.getElementById('customize-list');
+  list.innerHTML = '';
+
+  layout.order.forEach(id => {
+    const widget = WIDGETS.find(w => w.id === id);
+    if (!widget) return;
+    const hidden = layout.hidden.includes(id);
+
+    const row = document.createElement('div');
+    row.className = 'customize-row';
+    row.innerHTML = `
+      <span class="customize-name">${widget.title}</span>
+      <button class="btn btn-sm ${hidden ? '' : 'btn-ghost'} customize-toggle" data-id="${id}">
+        ${hidden ? 'Show' : 'Hide'}
+      </button>
+    `;
+    row.querySelector('.customize-toggle').addEventListener('click', () => {
+      if (hidden) {
+        layout.hidden = layout.hidden.filter(h => h !== id);
+      } else {
+        layout.hidden.push(id);
+      }
+      mountWidgets();
+      saveLayout();
+      renderCustomizePanel();
+    });
+    list.appendChild(row);
   });
 }
 
 // ── Sync ──────────────────────────────────────────────────────────────────────
 async function loadAll() {
+  // Load layout first
+  const savedLayout = await sb.loadWidgetData(session, '__layout__').catch(() => null);
+  if (savedLayout?.order) {
+    // Merge: keep any new widgets not in saved order
+    const newIds = WIDGETS.map(w => w.id).filter(id => !savedLayout.order.includes(id));
+    layout.order  = [...savedLayout.order, ...newIds];
+    layout.hidden = savedLayout.hidden || [];
+  }
+
+  // Load widget data
   await Promise.all(WIDGETS.map(async w => {
     if (!w.onSync) return;
     try {
@@ -136,8 +276,7 @@ async function loadAll() {
 async function saveWidget(widgetId) {
   const widget = WIDGETS.find(w => w.id === widgetId);
   if (!widget?.getData) return;
-  const data = widget.getData();
-  sb.saveWidgetData(session, widgetId, data).catch(() => {});
+  sb.saveWidgetData(session, widgetId, widget.getData()).catch(() => {});
 }
 
 window.addEventListener('widget:save', e => saveWidget(e.detail.id));
@@ -216,9 +355,10 @@ function setupLoginPage() {
 
 async function onSignedIn() {
   showApp();
+  await loadAll();
   mountWidgets();
   renderHeaderAuth();
-  await loadAll();
+  setupCustomizePanel();
   await requestNotifications();
 }
 
