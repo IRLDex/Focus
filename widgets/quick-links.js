@@ -83,10 +83,13 @@ export default {
       this._el.pickerWrap.style.display = 'none';
     });
 
+    // Prevent clicks inside the picker wrap from reaching the document close handler
+    this._el.pickerWrap.addEventListener('click', e => e.stopPropagation());
+
     // Close picker when clicking outside
     document.addEventListener('click', () => {
       if (this._el) this._el.pickerWrap.style.display = 'none';
-    }, { capture: true });
+    });
 
     this._el.addBtn.addEventListener('click', () => this._showForm());
     this._el.cancelBtn.addEventListener('click', () => this._hideForm());
