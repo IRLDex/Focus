@@ -1,3 +1,11 @@
+// Load emoji-picker-element once (web component, CDN)
+if (!customElements.get('emoji-picker')) {
+  const s = document.createElement('script');
+  s.type = 'module';
+  s.src = 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js';
+  document.head.appendChild(s);
+}
+
 export default {
   id: 'quick-links',
   title: 'Quick Links',
@@ -5,7 +13,7 @@ export default {
 
   _links: [],
   _nextId: 1,
-  _adding: false,
+  _selectedEmoji: '🔗',
 
   render(container) {
     this._container = container;
@@ -25,11 +33,18 @@ export default {
   },
 
   _buildUI() {
+    this._selectedEmoji = '🔗';
+
     this._container.innerHTML = `
       <div class="ql-grid"></div>
       <div class="ql-add-form" style="display:none">
         <div class="ql-form-row">
-          <input class="ql-emoji" type="text" placeholder="🔗" maxlength="2" value="🔗">
+          <div class="ql-emoji-wrap">
+            <button class="ql-emoji-btn" title="Pick emoji">🔗</button>
+            <div class="ql-picker-popover" style="display:none">
+              <emoji-picker class="ql-picker"></emoji-picker>
+            </div>
+          </div>
           <input class="ql-name" type="text" placeholder="Name" maxlength="30">
         </div>
         <input class="ql-url" type="url" placeholder="https://…">
@@ -44,13 +59,34 @@ export default {
     this._el = {
       grid:      this._container.querySelector('.ql-grid'),
       form:      this._container.querySelector('.ql-add-form'),
-      emoji:     this._container.querySelector('.ql-emoji'),
+      emojiBtn:  this._container.querySelector('.ql-emoji-btn'),
+      pickerWrap:this._container.querySelector('.ql-picker-popover'),
+      picker:    this._container.querySelector('emoji-picker'),
       name:      this._container.querySelector('.ql-name'),
       url:       this._container.querySelector('.ql-url'),
       addBtn:    this._container.querySelector('.ql-add-btn'),
       saveBtn:   this._container.querySelector('.ql-save-btn'),
       cancelBtn: this._container.querySelector('.ql-cancel-btn'),
     };
+
+    // Toggle picker popover
+    this._el.emojiBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = this._el.pickerWrap.style.display !== 'none';
+      this._el.pickerWrap.style.display = open ? 'none' : 'block';
+    });
+
+    // Pick an emoji
+    this._el.picker.addEventListener('emoji-click', e => {
+      this._selectedEmoji = e.detail.unicode;
+      this._el.emojiBtn.textContent = this._selectedEmoji;
+      this._el.pickerWrap.style.display = 'none';
+    });
+
+    // Close picker when clicking outside
+    document.addEventListener('click', () => {
+      if (this._el) this._el.pickerWrap.style.display = 'none';
+    }, { capture: true });
 
     this._el.addBtn.addEventListener('click', () => this._showForm());
     this._el.cancelBtn.addEventListener('click', () => this._hideForm());
@@ -69,18 +105,19 @@ export default {
   _hideForm() {
     this._el.form.style.display = 'none';
     this._el.addBtn.style.display = '';
-    this._el.emoji.value = '🔗';
+    this._el.pickerWrap.style.display = 'none';
+    this._selectedEmoji = '🔗';
+    this._el.emojiBtn.textContent = '🔗';
     this._el.name.value = '';
     this._el.url.value = '';
   },
 
   _save() {
-    const name  = this._el.name.value.trim();
-    const url   = this._el.url.value.trim();
-    const emoji = this._el.emoji.value.trim() || '🔗';
+    const name = this._el.name.value.trim();
+    const url  = this._el.url.value.trim();
     if (!name || !url) return;
     const href = url.startsWith('http') ? url : `https://${url}`;
-    this._links.push({ id: this._nextId++, emoji, name, url: href });
+    this._links.push({ id: this._nextId++, emoji: this._selectedEmoji, name, url: href });
     this._hideForm();
     this._renderGrid();
     window.dispatchEvent(new CustomEvent('widget:save', { detail: { id: 'quick-links' } }));
