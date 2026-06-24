@@ -215,7 +215,43 @@ input:focus, textarea:focus { border-color: var(--accent); }
 .water-drops { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center; }
 .drop { font-size: 1.1rem; color: var(--text-muted); }
 .drop.filled { color: #60a5fa; }
-.water-next, .water-streak { font-size: 0.82rem; color: var(--text-muted); text-align: center; }
+.water-countdown {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+}
+.water-countdown-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+.water-countdown-ring svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+.wc-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+.wc-fg {
+  fill: none;
+  stroke: #60a5fa;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.9s linear;
+}
+.water-countdown-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.wc-time { font-size: 0.95rem; font-weight: 700; line-height: 1; }
+.wc-label { font-size: 0.55rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+.water-streak { font-size: 0.82rem; color: var(--text-muted); text-align: center; }
 .water-settings {
   display: flex; gap: 0.75rem; flex-wrap: wrap;
   font-size: 0.8rem; color: var(--text-muted); justify-content: center;

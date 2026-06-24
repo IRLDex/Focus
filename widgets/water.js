@@ -7,11 +7,13 @@ export default {
     glasses: 0,
     goal: 8,
     intervalMins: 30,
-    lastDrink: null,
     streak: 0,
     lastDate: null,
   },
+  _running: false,
+  _nextAt: null,
   _timer: null,
+  _tickInterval: null,
 
   render(container) {
     container.innerHTML = `
@@ -21,47 +23,64 @@ export default {
         <button class="btn btn-ghost water-reset" title="Reset count">↺</button>
       </div>
       <div class="water-drops" aria-hidden="true"></div>
-      <button class="btn water-drink">I drank! 💧</button>
-      <div class="water-next">Next reminder: <span class="water-next-time">—</span></div>
+      <button class="btn water-drink" disabled>I drank! 💧</button>
+      <div class="water-countdown">
+        <div class="water-countdown-ring">
+          <svg viewBox="0 0 80 80">
+            <circle class="wc-bg" cx="40" cy="40" r="34"/>
+            <circle class="wc-fg" cx="40" cy="40" r="34"
+              stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+          </svg>
+          <div class="water-countdown-text">
+            <span class="wc-time">—</span>
+            <span class="wc-label">remaining</span>
+          </div>
+        </div>
+        <button class="btn water-toggle">Start</button>
+      </div>
       <div class="water-streak">🔥 <span class="water-streak-val">0</span> day streak</div>
       <div class="water-settings">
-        <label>Every <input class="water-interval" type="number" min="5" max="120" value="30"> min</label>
+        <label>Every <input class="water-interval" type="number" min="1" max="120" value="30"> min</label>
         <label>Goal <input class="water-goal-input" type="number" min="1" max="20" value="8"> glasses</label>
       </div>
     `;
 
     this._el = {
-      count: container.querySelector('.water-count'),
-      goal: container.querySelector('.water-goal'),
-      drops: container.querySelector('.water-drops'),
-      drink: container.querySelector('.water-drink'),
-      reset: container.querySelector('.water-reset'),
-      nextTime: container.querySelector('.water-next-time'),
-      streak: container.querySelector('.water-streak-val'),
-      interval: container.querySelector('.water-interval'),
+      count:     container.querySelector('.water-count'),
+      goal:      container.querySelector('.water-goal'),
+      drops:     container.querySelector('.water-drops'),
+      drink:     container.querySelector('.water-drink'),
+      reset:     container.querySelector('.water-reset'),
+      toggle:    container.querySelector('.water-toggle'),
+      wcTime:    container.querySelector('.wc-time'),
+      wcLabel:   container.querySelector('.wc-label'),
+      wcFg:      container.querySelector('.wc-fg'),
+      streak:    container.querySelector('.water-streak-val'),
+      interval:  container.querySelector('.water-interval'),
       goalInput: container.querySelector('.water-goal-input'),
     };
 
+    this._el.toggle.addEventListener('click', () => this._toggleTimer());
     this._el.drink.addEventListener('click', () => this._drink());
     this._el.reset.addEventListener('click', () => {
       this._state.glasses = 0;
-      this._render();
+      this._renderStatic();
       window.dispatchEvent(new CustomEvent('widget:save', { detail: { id: 'water' } }));
     });
     this._el.interval.addEventListener('change', () => {
       this._state.intervalMins = parseInt(this._el.interval.value) || 30;
-      this._scheduleNext();
+      if (this._running) this._startTimer();
       window.dispatchEvent(new CustomEvent('widget:save', { detail: { id: 'water' } }));
     });
     this._el.goalInput.addEventListener('change', () => {
       this._state.goal = parseInt(this._el.goalInput.value) || 8;
-      this._render();
+      this._renderStatic();
       window.dispatchEvent(new CustomEvent('widget:save', { detail: { id: 'water' } }));
     });
 
     this._checkDayReset();
-    this._scheduleNext();
-    this._render();
+    this._renderStatic();
+    this._renderCountdown();
   },
 
   onSync(data) {
@@ -70,7 +89,7 @@ export default {
     if (this._el) {
       this._el.interval.value = this._state.intervalMins;
       this._el.goalInput.value = this._state.goal;
-      this._render();
+      this._renderStatic();
     }
   },
 
@@ -92,41 +111,77 @@ export default {
     this._state.lastDate = today;
   },
 
+  _toggleTimer() {
+    if (this._running) {
+      this._stopTimer();
+    } else {
+      this._startTimer();
+    }
+  },
+
+  _startTimer() {
+    this._stopTimer();
+    this._running = true;
+    this._nextAt = Date.now() + this._state.intervalMins * 60 * 1000;
+    this._el.toggle.textContent = 'Stop';
+    this._el.toggle.classList.add('btn-ghost');
+    this._el.drink.disabled = false;
+    this._timer = setTimeout(() => this._remind(), this._state.intervalMins * 60 * 1000);
+    this._tickInterval = setInterval(() => this._renderCountdown(), 1000);
+    this._renderCountdown();
+  },
+
+  _stopTimer() {
+    this._running = false;
+    clearTimeout(this._timer);
+    clearInterval(this._tickInterval);
+    if (this._el) {
+      this._el.toggle.textContent = 'Start';
+      this._el.toggle.classList.remove('btn-ghost');
+      this._el.drink.disabled = true;
+      this._renderCountdown();
+    }
+  },
+
   _drink() {
     this._state.glasses++;
-    this._state.lastDrink = Date.now();
-    this._scheduleNext();
-    this._render();
+    this._renderStatic();
     window.dispatchEvent(new CustomEvent('widget:save', { detail: { id: 'water' } }));
-  },
-
-  _scheduleNext() {
-    clearTimeout(this._timer);
-    const ms = this._state.intervalMins * 60 * 1000;
-    this._nextAt = Date.now() + ms;
-    this._timer = setTimeout(() => this._remind(), ms);
-    this._updateNextLabel();
-
-    clearInterval(this._tickInterval);
-    this._tickInterval = setInterval(() => this._updateNextLabel(), 10000);
-  },
-
-  _updateNextLabel() {
-    if (!this._el) return;
-    const diff = Math.max(0, Math.round((this._nextAt - Date.now()) / 60000));
-    this._el.nextTime.textContent = diff <= 0 ? 'now!' : `in ${diff} min`;
+    // Restart the countdown from now
+    this._startTimer();
   },
 
   _remind() {
     if (Notification.permission === 'granted') {
-      new Notification('Hydration check!', { body: 'Time to drink some water 💧', icon: '💧' });
+      new Notification('Hydration check! 💧', { body: 'Time to drink some water!' });
     }
     this._el.drink.classList.add('pulse');
     setTimeout(() => this._el?.drink.classList.remove('pulse'), 2000);
-    this._scheduleNext();
+    // Restart countdown for next interval
+    this._startTimer();
   },
 
-  _render() {
+  _renderCountdown() {
+    if (!this._el) return;
+    if (!this._running) {
+      this._el.wcTime.textContent = '--:--';
+      this._el.wcLabel.textContent = 'not started';
+      this._el.wcFg.style.strokeDashoffset = 213.6;
+      return;
+    }
+
+    const totalMs = this._state.intervalMins * 60 * 1000;
+    const remainMs = Math.max(0, this._nextAt - Date.now());
+    const mins = Math.floor(remainMs / 60000);
+    const secs = Math.floor((remainMs % 60000) / 1000);
+    this._el.wcTime.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+    this._el.wcLabel.textContent = 'remaining';
+
+    const progress = remainMs / totalMs;
+    this._el.wcFg.style.strokeDashoffset = 213.6 * (1 - progress);
+  },
+
+  _renderStatic() {
     if (!this._el) return;
     this._el.count.textContent = this._state.glasses;
     this._el.goal.textContent = `/ ${this._state.goal} glasses`;
@@ -134,8 +189,7 @@ export default {
     this._el.goalInput.value = this._state.goal;
 
     const filled = Math.min(this._state.glasses, this._state.goal);
-    const total = this._state.goal;
-    this._el.drops.innerHTML = Array.from({ length: total }, (_, i) =>
+    this._el.drops.innerHTML = Array.from({ length: this._state.goal }, (_, i) =>
       `<span class="drop ${i < filled ? 'filled' : ''}">${i < filled ? '💧' : '○'}</span>`
     ).join('');
   },
