@@ -8,45 +8,40 @@
 </head>
 <body>
 
-  <!-- Config banner (hidden once Supabase is configured) -->
-  <div class="config-banner" id="config-banner">
-    ⚠️ Configure Supabase in <code>supabase.js</code> to enable accounts &amp; sync. Running in guest (local) mode.
+  <!-- ── Login page ─────────────────────────────────────────────────────── -->
+  <div id="login-page">
+    <div class="login-card">
+      <div class="login-logo">✦ Focus</div>
+      <p class="login-tagline">Your personal productivity dashboard</p>
+
+      <h2 class="login-title" id="login-title">Welcome back</h2>
+
+      <form id="login-form" novalidate>
+        <input id="login-email"    type="email"    placeholder="Email"    autocomplete="email"            required>
+        <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" required>
+        <div id="login-error" class="login-error"></div>
+        <button class="btn" id="login-submit" type="submit">Sign in</button>
+      </form>
+
+      <button id="login-toggle" class="login-toggle">Don't have an account? Register</button>
+
+      <button class="btn btn-ghost btn-sm theme-toggle login-theme" title="Toggle theme">☀️</button>
+    </div>
   </div>
 
-  <!-- Header -->
-  <header class="header">
-    <div class="header-logo">✦ Focus</div>
-    <div class="header-right">
-      <div id="auth-area"></div>
-      <button class="btn btn-ghost btn-sm" id="theme-toggle" title="Toggle theme">☀️</button>
-    </div>
-  </header>
+  <!-- ── App (hidden until signed in) ──────────────────────────────────── -->
+  <div id="app" style="display:none">
+    <header class="header">
+      <div class="header-logo">✦ Focus</div>
+      <div class="header-right">
+        <div id="auth-area"></div>
+        <button class="btn btn-ghost btn-sm theme-toggle" title="Toggle theme">☀️</button>
+      </div>
+    </header>
 
-  <!-- Dashboard grid — widgets are injected here by app.js -->
-  <main class="dashboard" id="dashboard"></main>
-
-  <!-- Auth modal -->
-  <div class="modal-overlay" id="auth-modal" role="dialog" aria-modal="true">
-    <div class="modal">
-      <button class="modal-close" id="modal-close" aria-label="Close">×</button>
-      <h2>Welcome back</h2>
-      <form id="auth-form" novalidate>
-        <input id="auth-email" type="email" placeholder="Email" autocomplete="email" required>
-        <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" required>
-        <div id="auth-error"></div>
-        <button class="btn" id="auth-submit" type="submit">Sign in</button>
-      </form>
-      <button id="auth-toggle">Don't have an account? Register</button>
-    </div>
+    <main class="dashboard" id="dashboard"></main>
   </div>
 
   <script type="module" src="app.js"></script>
-  <script type="module">
-    // Hide config banner once real Supabase values are set
-    import { SUPABASE_URL } from './supabase.js';
-    if (SUPABASE_URL && !SUPABASE_URL.startsWith('YOUR_')) {
-      document.getElementById('config-banner').style.display = 'none';
-    }
-  </script>
 </body>
 </html>

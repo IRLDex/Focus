@@ -481,23 +481,21 @@ input:focus, textarea:focus { border-color: var(--accent); }
 }
 .lofi-updated { font-size: 0.75rem; color: var(--text-muted); }
 
-/* ── Auth Modal ───────────────────────────────────────────────────────────── */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 500;
+/* ── Login page ───────────────────────────────────────────────────────────── */
+#login-page {
+  min-height: 100vh;
+  display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
+  padding: 1.5rem;
+  background: var(--bg);
 }
-.modal-overlay.open { display: flex; }
-.modal {
+.login-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 2rem;
+  box-shadow: var(--shadow);
+  padding: 2.5rem 2rem;
   width: 100%;
   max-width: 380px;
   display: flex;
@@ -505,31 +503,42 @@ input:focus, textarea:focus { border-color: var(--accent); }
   gap: 1rem;
   position: relative;
 }
-.modal h2 { font-size: 1.25rem; }
-.modal-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  font-size: 1.3rem;
-  cursor: pointer;
-  color: var(--text-muted);
+.login-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  text-align: center;
 }
-.modal-close:hover { color: var(--text); }
-#auth-form { display: flex; flex-direction: column; gap: 0.75rem; }
-#auth-error { font-size: 0.82rem; color: var(--red); min-height: 1.2em; }
-#auth-toggle {
+.login-tagline {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: -0.5rem;
+}
+.login-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+#login-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.login-error { font-size: 0.82rem; color: var(--red); min-height: 1.2em; }
+.login-toggle {
   background: none;
   border: none;
   color: var(--accent);
   cursor: pointer;
   font-size: 0.82rem;
-  text-align: left;
   font-family: var(--font);
   padding: 0;
+  text-align: left;
 }
-#auth-toggle:hover { text-decoration: underline; }
+.login-toggle:hover { text-decoration: underline; }
+.login-theme {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
 
 /* ── Supabase config notice ───────────────────────────────────────────────── */
 .config-banner {

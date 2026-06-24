@@ -38,9 +38,7 @@ const sb = {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (data.access_token) {
-      localStorage.setItem('sb_session', JSON.stringify(data));
-    }
+    if (data.access_token) localStorage.setItem('sb_session', JSON.stringify(data));
     return data;
   },
 
@@ -94,42 +92,38 @@ const sb = {
 // ── App state ─────────────────────────────────────────────────────────────────
 let session = null;
 
+// ── Views ─────────────────────────────────────────────────────────────────────
+function showLoginPage() {
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
 // ── Mount widgets ─────────────────────────────────────────────────────────────
 function mountWidgets() {
   const grid = document.getElementById('dashboard');
-  grid.innerHTML = '';
-
+  if (grid.children.length) return; // already mounted
   WIDGETS.forEach(widget => {
     const card = document.createElement('div');
     card.className = `card card-${widget.size || 'small'}`;
-
     const header = document.createElement('div');
     header.className = 'card-header';
     header.innerHTML = `<h2 class="card-title">${widget.title}</h2>`;
-
     const body = document.createElement('div');
     body.className = 'card-body';
-
     card.appendChild(header);
     card.appendChild(body);
     grid.appendChild(card);
-
     widget.render(body);
   });
 }
 
 // ── Sync ──────────────────────────────────────────────────────────────────────
 async function loadAll() {
-  if (!session) {
-    // Guest: load from localStorage
-    WIDGETS.forEach(w => {
-      if (!w.onSync) return;
-      const raw = localStorage.getItem(`widget_${w.id}`);
-      if (raw) w.onSync(JSON.parse(raw));
-    });
-    return;
-  }
-
   await Promise.all(WIDGETS.map(async w => {
     if (!w.onSync) return;
     try {
@@ -143,57 +137,37 @@ async function saveWidget(widgetId) {
   const widget = WIDGETS.find(w => w.id === widgetId);
   if (!widget?.getData) return;
   const data = widget.getData();
-
-  localStorage.setItem(`widget_${widgetId}`, JSON.stringify(data));
-
-  if (session) {
-    sb.saveWidgetData(session, widgetId, data).catch(() => {});
-  }
+  sb.saveWidgetData(session, widgetId, data).catch(() => {});
 }
 
 window.addEventListener('widget:save', e => saveWidget(e.detail.id));
 
-// ── Auth UI ───────────────────────────────────────────────────────────────────
-function renderAuthUI() {
+// ── Header auth area ──────────────────────────────────────────────────────────
+function renderHeaderAuth() {
   const authEl = document.getElementById('auth-area');
-
-  if (session) {
-    authEl.innerHTML = `
-      <span class="auth-email">${session.user.email}</span>
-      <button class="btn btn-ghost btn-sm" id="signout-btn">Sign out</button>
-    `;
-    document.getElementById('signout-btn').addEventListener('click', async () => {
-      await sb.signOut();
-      session = null;
-      renderAuthUI();
-      loadAll();
-    });
-    return;
-  }
-
   authEl.innerHTML = `
-    <button class="btn btn-sm" id="signin-btn">Sign in / Register</button>
+    <span class="auth-email">${session.user.email}</span>
+    <button class="btn btn-ghost btn-sm" id="signout-btn">Sign out</button>
   `;
-
-  document.getElementById('signin-btn').addEventListener('click', () => {
-    document.getElementById('auth-modal').classList.add('open');
+  document.getElementById('signout-btn').addEventListener('click', async () => {
+    await sb.signOut();
+    session = null;
+    showLoginPage();
   });
 }
 
-function setupAuthModal() {
-  const modal = document.getElementById('auth-modal');
-  const closeBtn = document.getElementById('modal-close');
-  const form = document.getElementById('auth-form');
-  const errEl = document.getElementById('auth-error');
-  const submitBtn = document.getElementById('auth-submit');
-  const toggleBtn = document.getElementById('auth-toggle');
-  let mode = 'signin'; // 'signin' | 'signup'
-
-  closeBtn.addEventListener('click', () => modal.classList.remove('open'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+// ── Login page form ───────────────────────────────────────────────────────────
+function setupLoginPage() {
+  const form      = document.getElementById('login-form');
+  const errEl     = document.getElementById('login-error');
+  const submitBtn = document.getElementById('login-submit');
+  const toggleBtn = document.getElementById('login-toggle');
+  const titleEl   = document.getElementById('login-title');
+  let mode = 'signin';
 
   toggleBtn.addEventListener('click', () => {
     mode = mode === 'signin' ? 'signup' : 'signin';
+    titleEl.textContent   = mode === 'signin' ? 'Welcome back' : 'Create account';
     submitBtn.textContent = mode === 'signin' ? 'Sign in' : 'Create account';
     toggleBtn.textContent = mode === 'signin'
       ? "Don't have an account? Register"
@@ -207,8 +181,8 @@ function setupAuthModal() {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Please wait…';
 
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value;
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
 
     try {
       let data;
@@ -222,21 +196,17 @@ function setupAuthModal() {
           submitBtn.textContent = 'Create account';
           return;
         }
-        if (data.access_token) {
-          localStorage.setItem('sb_session', JSON.stringify(data));
-        }
+        if (data.access_token) localStorage.setItem('sb_session', JSON.stringify(data));
       }
 
       if (data.access_token) {
         session = data;
-        modal.classList.remove('open');
-        renderAuthUI();
-        loadAll();
+        await onSignedIn();
       } else {
         errEl.textContent = data.error_description || data.msg || 'Authentication failed.';
       }
-    } catch (err) {
-      errEl.textContent = 'Network error. Check your Supabase config.';
+    } catch {
+      errEl.textContent = 'Network error. Check your connection.';
     }
 
     submitBtn.disabled = false;
@@ -244,20 +214,28 @@ function setupAuthModal() {
   });
 }
 
+async function onSignedIn() {
+  showApp();
+  mountWidgets();
+  renderHeaderAuth();
+  await loadAll();
+  await requestNotifications();
+}
+
 // ── Theme ─────────────────────────────────────────────────────────────────────
 function setupTheme() {
-  const btn = document.getElementById('theme-toggle');
+  const btns = document.querySelectorAll('.theme-toggle');
   const saved = localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
-  btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  btns.forEach(btn => btn.textContent = saved === 'dark' ? '☀️' : '🌙');
 
-  btn.addEventListener('click', () => {
+  btns.forEach(btn => btn.addEventListener('click', () => {
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('theme', next);
-    btn.textContent = next === 'dark' ? '☀️' : '🌙';
-  });
+    btns.forEach(b => b.textContent = next === 'dark' ? '☀️' : '🌙');
+  }));
 }
 
 // ── Notification permission ───────────────────────────────────────────────────
@@ -270,17 +248,15 @@ async function requestNotifications() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   setupTheme();
-  mountWidgets();
+  setupLoginPage();
 
   session = await sb.getSession();
-
-  // Validate stored session minimally
-  if (session && !session.access_token) session = null;
-
-  renderAuthUI();
-  setupAuthModal();
-  await loadAll();
-  await requestNotifications();
+  if (session?.access_token) {
+    await onSignedIn();
+  } else {
+    session = null;
+    showLoginPage();
+  }
 }
 
 init();
