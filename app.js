@@ -179,6 +179,11 @@ function setupDragAndDrop() {
 
   grid.querySelectorAll('.card').forEach(card => {
     card.addEventListener('dragstart', e => {
+      // Don't hijack drags that originate from interactive elements
+      if (e.target.closest('input, textarea, select, button, a')) {
+        e.preventDefault();
+        return;
+      }
       dragSrcId = card.dataset.widgetId;
       card.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
