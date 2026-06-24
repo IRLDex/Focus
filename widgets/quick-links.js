@@ -35,16 +35,21 @@ export default {
   _buildUI() {
     this._selectedEmoji = '🔗';
 
+    // Remove any leftover portal from a previous render
+    document.getElementById('ql-picker-portal')?.remove();
+
+    // Build picker portal on body so it's never clipped by card overflow
+    const portal = document.createElement('div');
+    portal.id = 'ql-picker-portal';
+    portal.style.cssText = 'position:fixed;z-index:9999;display:none';
+    portal.innerHTML = '<emoji-picker class="ql-picker"></emoji-picker>';
+    document.body.appendChild(portal);
+
     this._container.innerHTML = `
       <div class="ql-grid"></div>
       <div class="ql-add-form" style="display:none">
         <div class="ql-form-row">
-          <div class="ql-emoji-wrap">
-            <button class="ql-emoji-btn" title="Pick emoji">🔗</button>
-            <div class="ql-picker-popover" style="display:none">
-              <emoji-picker class="ql-picker"></emoji-picker>
-            </div>
-          </div>
+          <button class="ql-emoji-btn" title="Pick emoji">🔗</button>
           <input class="ql-name" type="text" placeholder="Name" maxlength="30">
         </div>
         <input class="ql-url" type="url" placeholder="https://…">
@@ -60,8 +65,8 @@ export default {
       grid:      this._container.querySelector('.ql-grid'),
       form:      this._container.querySelector('.ql-add-form'),
       emojiBtn:  this._container.querySelector('.ql-emoji-btn'),
-      pickerWrap:this._container.querySelector('.ql-picker-popover'),
-      picker:    this._container.querySelector('emoji-picker'),
+      portal,
+      picker:    portal.querySelector('emoji-picker'),
       name:      this._container.querySelector('.ql-name'),
       url:       this._container.querySelector('.ql-url'),
       addBtn:    this._container.querySelector('.ql-add-btn'),
@@ -69,26 +74,31 @@ export default {
       cancelBtn: this._container.querySelector('.ql-cancel-btn'),
     };
 
-    // Toggle picker popover
+    // Toggle picker — position portal below the emoji button
     this._el.emojiBtn.addEventListener('click', e => {
       e.stopPropagation();
-      const open = this._el.pickerWrap.style.display !== 'none';
-      this._el.pickerWrap.style.display = open ? 'none' : 'block';
+      const open = this._el.portal.style.display !== 'none';
+      if (open) {
+        this._el.portal.style.display = 'none';
+        return;
+      }
+      const rect = this._el.emojiBtn.getBoundingClientRect();
+      this._el.portal.style.top  = `${rect.bottom + 6}px`;
+      this._el.portal.style.left = `${rect.left}px`;
+      this._el.portal.style.display = 'block';
     });
 
     // Pick an emoji
     this._el.picker.addEventListener('emoji-click', e => {
       this._selectedEmoji = e.detail.unicode;
       this._el.emojiBtn.textContent = this._selectedEmoji;
-      this._el.pickerWrap.style.display = 'none';
+      this._el.portal.style.display = 'none';
     });
 
-    // Prevent clicks inside the picker wrap from reaching the document close handler
-    this._el.pickerWrap.addEventListener('click', e => e.stopPropagation());
-
     // Close picker when clicking outside
+    portal.addEventListener('click', e => e.stopPropagation());
     document.addEventListener('click', () => {
-      if (this._el) this._el.pickerWrap.style.display = 'none';
+      if (this._el) this._el.portal.style.display = 'none';
     });
 
     this._el.addBtn.addEventListener('click', () => this._showForm());
@@ -108,7 +118,7 @@ export default {
   _hideForm() {
     this._el.form.style.display = 'none';
     this._el.addBtn.style.display = '';
-    this._el.pickerWrap.style.display = 'none';
+    this._el.portal.style.display = 'none';
     this._selectedEmoji = '🔗';
     this._el.emojiBtn.textContent = '🔗';
     this._el.name.value = '';

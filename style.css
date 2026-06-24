@@ -700,11 +700,7 @@ input:focus, textarea:focus { border-color: var(--accent); }
 }
 .ql-emoji-btn:hover { border-color: var(--accent); }
 
-.ql-picker-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 300;
+#ql-picker-portal {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow);
