@@ -173,14 +173,20 @@ function createCard(widget) {
 
 // ── Drag and drop ─────────────────────────────────────────────────────────────
 let dragSrcId = null;
+let dragHandleActive = false;
 
 function setupDragAndDrop() {
   const grid = document.getElementById('dashboard');
 
   grid.querySelectorAll('.card').forEach(card => {
+    // Only allow drag when the grab originates from the drag handle
+    const handle = card.querySelector('.drag-handle');
+    if (handle) {
+      handle.addEventListener('mousedown', () => { dragHandleActive = true; });
+    }
+
     card.addEventListener('dragstart', e => {
-      // Don't hijack drags that originate from interactive elements
-      if (e.target.closest('input, textarea, select, button, a')) {
+      if (!dragHandleActive) {
         e.preventDefault();
         return;
       }
@@ -193,6 +199,7 @@ function setupDragAndDrop() {
       card.classList.remove('dragging');
       grid.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
       dragSrcId = null;
+      dragHandleActive = false;
     });
 
     card.addEventListener('dragover', e => {
